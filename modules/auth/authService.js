@@ -7,6 +7,8 @@ const SALT_ROUNDS = 10;
 
 const loginUsuario = async (pool, email, password) => {
     // 1. Buscamos el usuario por email
+    console.log('Buscando usuario por email:', email);
+    console.log('Contraseña:', password); // Asegúrate de que el pool esté definido y sea válido
     const usuario = await AuthModel.buscarUsuarioPorEmail(pool, email);
     // 2. Si no existe o no está activo, lanzamos un error de credenciales inválidas
     
