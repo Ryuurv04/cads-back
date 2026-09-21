@@ -8,7 +8,7 @@
 
 const  buscarUsuarioPorEmail = async (pool, email) => {
      const [rows] = await pool.execute(
-      ` SELECT u.cod_usuario, u.nombre_empresa, u.direccion,u.telefono, u.password
+      ` SELECT u.cod_usuario, u.telefono, u.password,u.nombre,u.apellido
             FROM usuarios u
             WHERE u.correo = ? AND u.estado = 'A'`,
       [email]
@@ -30,7 +30,7 @@ const  buscarRolesPorUsuario = async (pool, codUsuario) => {
 
 const  buscarUsuarioPorRol = async (pool, codUsuario, codRol) => {
     const [rows] = await pool.execute(
-    `SELECT u.cod_usuario, u.nombre_empresa,u.direccion,u.telefono, r.nombre_rol,r.cod_rol
+    `SELECT u.cod_usuario,u.telefono, r.nombre_rol,r.cod_rol
             FROM usuarios u
             INNER JOIN roles r ON u.cod_rol = r.cod_rol
             WHERE u.cod_usuario = ? AND r.cod_rol = ? AND u.estado = 'A'`,

@@ -3,15 +3,17 @@ const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
 
-
 const app = express();
 const port = process.env.PORT || 5000;
 
-const login = require('./routes/authRotes'); 
-
+// Importar la función migrate desde tu carpeta bd
+const { migrate } = require('./bd/migrate');
+const login = require('./routes/authRoutes'); 
+const cards = require('./routes/cardsRoutes');
 
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000' // Puedes especificar dominios si es necesario en producción
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true
 }));
 app.use(express.json());
 
@@ -21,35 +23,32 @@ const dbConfig = {
     port: process.env.DB_PORT,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    waitForConnections: true, // Esperar si la conexión no está disponible
-    connectionLimit: 10,     // Limitar el número de conexiones en el pool
-    queueLimit: 0,            // No limitar la cola de conexiones
-    namedPlaceholders: true   // Habilitar named placeholders para consultas
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
+    namedPlaceholders: true
 };
 const pool = mysql.createPool(dbConfig);
 
-// Test de conexión a la base de datos al inicio
-pool.getConnection()
-    .then(connection => {
-        console.log('Conexión exitosa a la base de datos MySQL!');
-        connection.release(); // Libera la conexión de vuelta al pool
-    })
-    .catch(err => {
-        console.error('Error al conectar a la base de datos MySQL:', err.message);
-        // Considerar salir del proceso o intentar reconectar si la base de datos es crítica
-    });
-
-
-
 // --- Rutas de la API ---
-// Ruta de prueba simple
 app.get('/', (req, res) => {
-    res.send('API de Inventario está funcionando!');
+    res.send('API de Cards está funcionando!');
 });
 
 app.use('/api/auth', login(pool)); 
+app.use('/api/cards', cards(pool));
 
-
-app.listen(port, () => {
-    console.log(`Servidor backend corriendo en puerto ${port}, ${process.env.FRONTEND_URL}`);
-});
+// --- Arranque seguro: Migraciones -> Conexión -> Listen ---
+migrate()
+    .then(() => pool.getConnection())
+    .then((connection) => {
+        console.log('Conexión exitosa a la base de datos MySQL!');
+        connection.release();
+        app.listen(port, () => {
+            console.log(`Servidor backend corriendo en puerto ${port}, Frontend: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
+        });
+    })
+    .catch((err) => {
+        console.error('Error crítico al inicializar la base de datos o correr migraciones:', err.message);
+        process.exit(1);
+    });

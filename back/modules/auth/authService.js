@@ -9,6 +9,7 @@ const loginUsuario = async (pool, email, password) => {
     // 1. Buscamos el usuario por email
     const usuario = await AuthModel.buscarUsuarioPorEmail(pool, email);
     // 2. Si no existe o no está activo, lanzamos un error de credenciales inválidas
+    
     if (!usuario) {
         const error = new Error('Credenciales inválidas');
         error.statusCode = 401; 
@@ -43,9 +44,9 @@ const loginUsuario = async (pool, email, password) => {
 
     const payload = {
         cod_usuario: usuario.cod_usuario,
-        nombre_empresa: usuario.nombre_empresa,
-        direccion: usuario.direccion,
         telefono: usuario.telefono,
+        nombre: usuario.nombre,
+        apellido: usuario.apellido,
         cod_rol: roles[0].cod_rol,
         rol: roles[0].nombre_rol,
         pantallas 
@@ -59,9 +60,9 @@ const loginUsuario = async (pool, email, password) => {
         requireRoleSelection: false ,
         user: {
             cod_usuario: usuario.cod_usuario,
-            nombre_empresa: usuario.nombre_empresa,
-            direccion: usuario.direccion,
             telefono: usuario.telefono,
+            nombre: usuario.nombre,
+            apellido: usuario.apellido,
             cod_rol: roles[0].cod_rol,
             rol: roles[0].nombre_rol
         },
@@ -96,8 +97,6 @@ const recuperarUsuario = async (pool, cod_usuario,cod_rol) => {
 
     const payload = {
         cod_usuario: usuario.cod_usuario,
-        nombre_empresa: usuario.nombre_empresa,
-        direccion: usuario.direccion,
         telefono: usuario.telefono,
         cod_rol: usuario.cod_rol,
         rol: usuario.nombre_rol

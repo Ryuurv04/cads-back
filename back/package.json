@@ -18,7 +18,7 @@
     "multer": "^2.2.0",
     "mysql2": "^3.22.5",
     "node-cron": "^4.2.1",
-    "nodemailer": "^8.0.10",
+    "postgrator": "^8.0.0",
     "resend": "^6.12.4",
     "uuid": "^14.0.1"
   }

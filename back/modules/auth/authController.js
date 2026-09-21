@@ -1,5 +1,5 @@
 const AuthService = require('./authService');
-const { obtenerOpcionesCookieToken } = require('../../../helpers/authCookieHelper');
+const { obtenerOpcionesCookieToken } = require('../../helpers/authCookieHelper');
 
 
 exports.login = (pool) => async (req, res) => {
