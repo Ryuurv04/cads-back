@@ -84,7 +84,7 @@ INSERT IGNORE INTO roles_pantallas (cod_rol, cod_pantalla, nivel) VALUES
     1,
     UUID(),
     'admin@cards.com',
-    '$2b$10$TqgM1oJgZgC23q66Jm51c.eBvVepzC8Ym6f78lV066266sX2X21iW', -- Hash de 'Password123!'
+    '$2y$10$eavlNvUw7FaQqIAqTotDOOv2QK5Cayq.YacbPnHR74CmBCuFFLNoW', -- Hash de 'Password123!'
     'Admin',
     'Sistema',
     '+50700000000',

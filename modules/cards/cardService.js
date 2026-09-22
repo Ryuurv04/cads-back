@@ -16,19 +16,27 @@ const createCard = async (pool, rawData) => {
     pagina_web,
     color_primario,
     color_secundario,
+    logo_url,
+    instagram,
+    linkedin,
+    tiktok,
+    facebook,
+    twitter,
   } = rawData;
 
-  // 1. Validaciones básicas obligatorias
+  // 1. Validaciones básicas
   if (!slug || !nombre || !apellido || !telefono) {
-    const error = new Error('Slug, nombre, apellido y teléfono son requeridos.');
+    const error = new Error('Slug, nombre, apellido y teléfono son obligatorios.');
     error.statusCode = 400;
     throw error;
   }
 
-  // 2. Normalización del slug (minúsculas, sin espacios ni caracteres especiales)
+  // 2. Normalización de slug
   const cleanSlug = slug
     .toLowerCase()
     .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/\s+/g, '-')
     .replace(/[^a-z0-9-]/g, '');
 
@@ -38,15 +46,24 @@ const createCard = async (pool, rawData) => {
     throw error;
   }
 
-  // 3. Validar disponibilidad de slug único
+  // 3. Comprobar disponibilidad
   const existingCard = await cardModel.findBySlug(pool, cleanSlug);
   if (existingCard) {
-    const error = new Error(`El slug "${cleanSlug}" ya está en uso.`);
+    const error = new Error(`El slug "${cleanSlug}" ya está registrado.`);
     error.statusCode = 409;
     throw error;
   }
 
-  // 4. Preparar payload con fallbacks para valores opcionales
+  // 4. Validar tamaño del Base64 (máx 3MB)
+  if (logo_url && logo_url.startsWith('data:image')) {
+    if (logo_url.length > 4.5 * 1024 * 1024) {
+      const error = new Error('La imagen excede el límite máximo permitido de 3 MB.');
+      error.statusCode = 400;
+      throw error;
+    }
+  }
+
+  // 5. Preparar objeto
   const cardData = {
     slug: cleanSlug,
     nombre: nombre.trim(),
@@ -61,14 +78,21 @@ const createCard = async (pool, rawData) => {
     pagina_web: pagina_web?.trim() || null,
     color_primario: color_primario?.trim() || '#1E293B',
     color_secundario: color_secundario?.trim() || '#0284C7',
+    logo_url: logo_url || null,
+    instagram: instagram?.trim() || null,
+    linkedin: linkedin?.trim() || null,
+    tiktok: tiktok?.trim() || null,
+    facebook: facebook?.trim() || null,
+    twitter: twitter?.trim() || null,
   };
 
   const insertId = await cardModel.insertCard(pool, cardData);
+  const cardDomain = process.env.CARD_DOMAIN || 'card.web-innova.site';
 
   return {
     id: insertId,
     slug: cleanSlug,
-    url: `card.dominio.com/${cleanSlug}`,
+    url: `${cardDomain}/${cleanSlug}`,
   };
 };
 
@@ -79,9 +103,9 @@ const getPublicCard = async (pool, slug) => {
     throw error;
   }
 
-  const card = await cardModel.findPublicBySlug(pool, slug);
+  const card = await cardModel.findPublicBySlug(pool, slug.trim());
   if (!card || !card.is_activo) {
-    const error = new Error('Tarjeta no encontrada o inactiva.');
+    const error = new Error('La tarjeta no existe o está inactiva.');
     error.statusCode = 404;
     throw error;
   }
@@ -107,6 +131,9 @@ const generateVCardContent = async (pool, slug) => {
     card.correo ? `EMAIL;TYPE=WORK,INTERNET:${card.correo}` : '',
     card.pagina_web ? `URL:${card.pagina_web}` : '',
     card.direccion ? `ADR;TYPE=WORK;CHARSET=UTF-8:;;${card.direccion};;;;` : '',
+    card.linkedin ? `X-SOCIALPROFILE;type=linkedin:${card.linkedin}` : '',
+    card.instagram ? `X-SOCIALPROFILE;type=instagram:${card.instagram}` : '',
+    card.twitter ? `X-SOCIALPROFILE;type=twitter:${card.twitter}` : '',
     'END:VCARD'
   ].filter(Boolean).join('\r\n');
 
@@ -115,8 +142,9 @@ const generateVCardContent = async (pool, slug) => {
     vCardString: vCardLines,
   };
 };
+
 module.exports = {
   createCard,
-    getPublicCard,
-    generateVCardContent,
+  getPublicCard,
+  generateVCardContent,
 };
